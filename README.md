@@ -1,4 +1,4 @@
-## DATA
+## GET AND SPLIT QMNIST DATA
 
 To get the data from the model and make the split, you need to execute
 ```bash
