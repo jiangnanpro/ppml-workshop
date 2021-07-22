@@ -1,29 +1,22 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import pickle
 import os
+import sys
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(parent_dir)
 
 import numpy as np
 import tensorflow as tf
 import random as python_random
 
+from data.utils import load_qmnist_data
+
 np.random.seed(20)
 python_random.seed(123)
 tf.random.set_seed(3)
 
-parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-pickle_file = os.path.join(parent_dir,'data/QMNIST_tabular_ppml.pickle')
-
 NUM_CLASSES = 10
-with open(pickle_file, 'rb') as f:
-    pickle_data = pickle.load(f)
-    x_defender = pickle_data['x_defender']
-    y_defender = pickle_data['y_defender']
-    del pickle_data
-y_defender = tf.keras.utils.to_categorical(y_defender[:,0],num_classes=10)
-print('Data loaded.')
-
 
 def defender_model_fn():
     """The architecture of the defender (victim) model.
@@ -32,7 +25,7 @@ def defender_model_fn():
     model = tf.keras.models.Sequential([
     tf.keras.layers.Flatten(),
     tf.keras.layers.Dense(128, activation=tf.nn.relu),
-    tf.keras.layers.Dense(10, activation=tf.nn.softmax)
+    tf.keras.layers.Dense(NUM_CLASSES, activation=tf.nn.softmax)
     ])
     
     train_op = tf.optimizers.Adam(1e-4)
@@ -42,13 +35,22 @@ def defender_model_fn():
                   metrics=['accuracy'])
     return model
 
+if __name__=='__main__':
 
-model = defender_model_fn()
+    # Load the data
+    pickle_file = os.path.join(parent_dir,'data/QMNIST_tabular_ppml.pickle')
+    x_defender, _, y_defender, _ = load_qmnist_data(pickle_file)
+    print('Data loaded.')
+    y_defender = tf.keras.utils.to_categorical(y_defender[:,0],num_classes=NUM_CLASSES)    
 
+    # Experiments: train the model several times varying the training set size
+    n_partitions = [48, 100, 200, 400, 800, 1600, 3200, 6400, 12800, 25600, 51200, 102400, 200000]
+    for n_examples in n_partitions:
+        model = defender_model_fn()
 
-with tf.device("cpu:0"):
-    model.fit(x_defender, y_defender, epochs=5, batch_size=64, validation_split=0.5, shuffle=False)
+        with tf.device("cpu:0"):
+            model.fit(x_defender[:n_examples], y_defender[:n_examples], epochs=5, batch_size=64, validation_split=0.5, shuffle=False)
 
-model.save(os.path.join(parent_dir,'defender_trained_models','simple_fn'))
+        model.save(os.path.join(parent_dir,'defender_trained_models','simple_fn_{}examples'.format(n_examples)))
 
 

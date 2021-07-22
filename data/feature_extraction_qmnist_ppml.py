@@ -1,36 +1,17 @@
 # Script to convert images into tabular data for QMNIST
 import pickle
-import numpy as np
-import cv2 as cv
-import tensorflow as tf
-from PIL import Image
 
+import tensorflow as tf
 from tensorflow.keras.models import Model
 
-
-# Resize the images
-def resize_image(images):
-    resized_images = []
-    for img in images:
-        temp_img = cv.resize(img, (32,32), interpolation=4)
-        temp_img = Image.fromarray(temp_img.astype('uint8')).convert('RGB')
-        final_img = np.array(temp_img)
-        resized_images.append(final_img)
-    resized_images = np.array(resized_images)
-    return resized_images
+from utils import load_qmnist_data, resize_image
 
 
 if __name__ == '__main__':
 
     # Load QMNIST data from QMNIST.pickle
     pickle_file = './QMNIST_ppml.pickle'
-    with open(pickle_file, 'rb') as f:
-        pickle_data = pickle.load(f)
-        x_defender = pickle_data['x_defender']
-        x_reserve = pickle_data['x_reserve']
-        y_defender = pickle_data['y_defender']
-        y_reserve = pickle_data['y_reserve']
-    del pickle_data
+    x_defender, x_reserve, y_defender, y_reserve = load_qmnist_data(pickle_file)
     print('Data loaded.')
 
     x_defender = resize_image(x_defender)
