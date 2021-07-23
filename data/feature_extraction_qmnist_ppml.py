@@ -1,5 +1,6 @@
 # Script to convert images into tabular data for QMNIST
 import pickle
+import os
 
 import tensorflow as tf
 from tensorflow.keras.models import Model
@@ -8,9 +9,9 @@ from utils import load_qmnist_data, resize_image
 
 
 if __name__ == '__main__':
-
+    current_dir = os.path.dirname(os.path.abspath(__file__))
     # Load QMNIST data from QMNIST.pickle
-    pickle_file = './QMNIST_ppml.pickle'
+    pickle_file = os.path.join(current_dir, 'QMNIST_ppml.pickle')
     x_defender, x_reserve, y_defender, y_reserve = load_qmnist_data(pickle_file)
     print('Data loaded.')
 
@@ -38,7 +39,7 @@ if __name__ == '__main__':
     split_dict['y_reserve'] = y_reserve
 
     # Store the dict using pickle
-    with open('QMNIST_tabular_ppml.pickle', 'wb') as f:
+    with open(os.path.join(current_dir, 'QMNIST_tabular_ppml.pickle'), 'wb') as f:
         pickle.dump(split_dict, f)
 
     print('Tabular data stored.')
