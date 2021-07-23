@@ -3,3 +3,4 @@ __pycache__/
 .vscode/
 /data/QMNIST*.pickle
 /defender_trained_models/
+data/resnet50_amber-salad-1.pth
