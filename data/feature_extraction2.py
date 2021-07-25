@@ -1,12 +1,14 @@
 import os
 import pickle
+import argparse
 
 import torch
 from torchvision import transforms, models
 from torch.utils.data import Dataset, DataLoader
 import torch.nn as nn
-import numpy as np 
+import numpy as np
 from PIL import Image
+from tqdm import tqdm
 
 from utils import load_qmnist_data
 
@@ -45,7 +47,7 @@ def get_features(model, images_array, device, transform=None, batch_size=128):
     x_tab = []
     model.eval()
     with torch.no_grad():
-        for data in data_loader:
+        for data in tqdm(data_loader):
             data = data.to(device)
             features = model.get_features(data)
             x_tab.append(features.cpu().numpy())
@@ -83,11 +85,6 @@ class TransferNet(nn.Module):
             feature_dim = self.base_network.output_num()
         
         self.classifier_layer = nn.Linear(feature_dim, num_class)
-        transfer_loss_args = {
-            "loss_type": self.transfer_loss,
-            "max_iter": max_iter,
-            "num_class": num_class
-        }
         self.adapt_loss = torch.nn.CrossEntropyLoss()
         self.criterion = torch.nn.CrossEntropyLoss()
 
@@ -188,6 +185,10 @@ class ResNetBackbone(nn.Module):
         return self._feature_dim
 
 if __name__=='__main__':
+    parser = argparse.ArgumentParser(description='Extract features from QMNIST images using Resnet50 pretrained with Fake-MNIST')
+    parser.add_argument('--model_path', help='Path for loading model weights', default=None)
+    args = parser.parse_args()
+
     current_dir = os.path.dirname(os.path.abspath(__file__))
     # Load QMNIST data from QMNIST.pickle
     pickle_file = os.path.join(current_dir, 'QMNIST_ppml.pickle')
@@ -195,7 +196,10 @@ if __name__=='__main__':
     print('Data loaded.')
     
     # Load pre-trained resnet model to preprocess
-    model_file_name = os.path.join(current_dir,"resnet50_amber-salad-1.pth")
+    if args.model_path is None:
+        model_file_name = os.path.join(current_dir,"resnet50_amber-salad-1.pth")
+    else:
+        model_file_name = args.model_path
 
     if not torch.cuda.is_available():
         device = torch.device("cpu")
