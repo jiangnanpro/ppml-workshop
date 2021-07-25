@@ -10,7 +10,7 @@ To create the tabular data using the second last layer of a VGG19 pretrained on 
 ```bash
 python data/feature_extraction1.py
 ```
-To create the tabular data with a ResNet50 pretrained on Fake-MNIST (credits to (Haozhe Sun)[https://github.com/SunHaozhe]), run instead:
+To create the tabular data with a ResNet50 pretrained on Fake-MNIST ([credits to Haozhe Sun](https://github.com/SunHaozhe)), run instead:
 ```bash
 python data/feature_extraction2.py
 ```
