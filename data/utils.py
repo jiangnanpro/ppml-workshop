@@ -4,7 +4,7 @@ import numpy as np
 import cv2 as cv
 from PIL import Image  
 
-def load_qmnist_data(pickle_file):    
+def load_data(pickle_file):    
     with open(pickle_file, 'rb') as f:
         pickle_data = pickle.load(f)
         x_defender = pickle_data['x_defender']

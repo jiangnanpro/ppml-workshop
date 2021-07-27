@@ -10,7 +10,7 @@ import numpy as np
 from PIL import Image
 from tqdm import tqdm
 
-from utils import load_qmnist_data
+from utils import load_data
 
 torch.backends.cudnn.deterministic = True
 torch.manual_seed(2021)
@@ -192,7 +192,7 @@ if __name__=='__main__':
     current_dir = os.path.dirname(os.path.abspath(__file__))
     # Load QMNIST data from QMNIST.pickle
     pickle_file = os.path.join(current_dir, 'QMNIST_ppml.pickle')
-    x_defender, x_reserve, y_defender, y_reserve = load_qmnist_data(pickle_file)
+    x_defender, x_reserve, y_defender, y_reserve = load_data(pickle_file)
     print('Data loaded.')
     
     # Load pre-trained resnet model to preprocess

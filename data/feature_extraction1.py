@@ -5,14 +5,14 @@ import os
 import tensorflow as tf
 from tensorflow.keras.models import Model
 
-from utils import load_qmnist_data, resize_image
+from utils import load_data, resize_image
 
 
 if __name__ == '__main__':
     current_dir = os.path.dirname(os.path.abspath(__file__))
     # Load QMNIST data from QMNIST.pickle
     pickle_file = os.path.join(current_dir, 'QMNIST_ppml.pickle')
-    x_defender, x_reserve, y_defender, y_reserve = load_qmnist_data(pickle_file)
+    x_defender, x_reserve, y_defender, y_reserve = load_data(pickle_file)
     print('Data loaded.')
 
     x_defender = resize_image(x_defender)
