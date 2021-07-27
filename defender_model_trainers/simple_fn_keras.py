@@ -14,14 +14,15 @@ from data.utils import load_qmnist_data
 
 np.random.seed(20)
 python_random.seed(123)
-tf.random.set_seed(3)
+
 
 NUM_CLASSES = 10
 
 def defender_model_fn():
     """The architecture of the defender (victim) model.
     The attack is white-box, hence the attacker is assumed to know this architecture too."""
-
+    
+    tf.random.set_seed(3)
     model = tf.keras.models.Sequential([
     tf.keras.layers.Flatten(),
     tf.keras.layers.Dense(128, activation=tf.nn.relu),
