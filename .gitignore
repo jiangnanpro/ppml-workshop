@@ -4,3 +4,6 @@ __pycache__/
 /data/QMNIST*.pickle
 /defender_trained_models/
 data/resnet50_amber-salad-1.pth
+data/QMNIST_ppml_ImageFolder/
+data/sanity_check_defender.png
+data/sanity_check_reserve.png
