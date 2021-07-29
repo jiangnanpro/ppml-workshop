@@ -7,3 +7,5 @@ data/resnet50_amber-salad-1.pth
 data/QMNIST_ppml_ImageFolder/
 data/sanity_check_defender.png
 data/sanity_check_reserve.png
+resnet50_fm_defender.pth
+resnet50_large_fm_defender.pth
