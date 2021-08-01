@@ -39,7 +39,7 @@ import shutil
 import pickle
 from PIL import Image # 8.0.1
 import argparse
-from torchvision import models
+from torchvision import models, transforms, datasets
 
 resnet_dict = {
     "resnet18": models.resnet18,
@@ -349,8 +349,8 @@ class LMMDLoss(MMDLoss, LambdaSheduler):
         target_logits = target_logits / target_logits_sum
 
         weight_ss = np.zeros((batch_size, batch_size))
-        weight_tt = np.zeros((batch_size, batch_size))
-        weight_st = np.zeros((batch_size, batch_size))
+        weight_tt = np.zeros((1, 1))
+        weight_st = np.zeros((batch_size, 1))
 
         set_s = set(source_label)
         set_t = set(target_label)
@@ -358,7 +358,7 @@ class LMMDLoss(MMDLoss, LambdaSheduler):
         for i in range(self.num_class): # (B, C)
             if i in set_s and i in set_t:
                 s_tvec = source_label_onehot[:, i].reshape(batch_size, -1) # (B, 1)
-                t_tvec = target_logits[:, i].reshape(batch_size, -1) # (B, 1)
+                t_tvec = target_logits[:, i].reshape(1, -1) # (B, 1)
                 
                 ss = np.dot(s_tvec, s_tvec.T) # (B, B)
                 weight_ss = weight_ss + ss
@@ -378,6 +378,78 @@ class LMMDLoss(MMDLoss, LambdaSheduler):
             weight_tt = np.array([0])
             weight_st = np.array([0])
         return weight_ss.astype('float32'), weight_tt.astype('float32'), weight_st.astype('float32')
+
+
+class _InfiniteSampler(torch.utils.data.Sampler):
+    """Wraps another Sampler to yield an infinite stream."""
+    def __init__(self, sampler):
+        self.sampler = sampler
+
+    def __iter__(self):
+        while True:
+            for batch in self.sampler:
+                yield batch
+
+class InfiniteDataLoader:
+    def __init__(self, dataset, batch_size, shuffle=True, drop_last=False, num_workers=0, weights=None, **kwargs):
+        if weights is not None:
+            sampler = torch.utils.data.WeightedRandomSampler(weights,
+                replacement=False,
+                num_samples=batch_size)
+        else:
+            sampler = torch.utils.data.RandomSampler(dataset,
+                replacement=False)
+            
+        batch_sampler = torch.utils.data.BatchSampler(
+            sampler,
+            batch_size=batch_size,
+            drop_last=drop_last)
+
+        self._infinite_iterator = iter(torch.utils.data.DataLoader(
+            dataset,
+            num_workers=num_workers,
+            batch_sampler=_InfiniteSampler(batch_sampler)
+        ))
+
+    def __iter__(self):
+        while True:
+            yield next(self._infinite_iterator)
+
+    def __len__(self):
+        return 0 # Always return 0
+
+def set_random_seed(seed=0):
+    # seed setting
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+
+# The following code are adapted
+
+
+def load_source_dataloader(data_folder, batch_size, num_workers=0, **kwargs):
+    transform = transforms.Compose(
+            [lambda x: x.convert("RGB") if x.mode == "L" else x,
+                transforms.Resize([224, 224]),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                  std=[0.229, 0.224, 0.225])])
+    data = datasets.ImageFolder(root=data_folder, transform=transform)
+    data_loader = get_infinite_data_loader(data, batch_size=batch_size, 
+                                shuffle=True, 
+                                num_workers=num_workers, **kwargs, drop_last=True)
+    #n_class = len(data.classes)
+    return data_loader
+
+
+def get_infinite_data_loader(dataset, batch_size, shuffle=True, drop_last=False, num_workers=0, **kwargs):
+    return InfiniteDataLoader(dataset, batch_size=batch_size, shuffle=True, drop_last=drop_last, num_workers=num_workers, **kwargs)
+
+
 
 
 
