@@ -16,6 +16,8 @@ python data/feature_extraction2.py
 ```
 Any of these two scripts will produce another .pickle file inside the data folder with the same split of defender and reserve, but now with the images in tabular format.
 
+Tabular data for CIFAR10 is provided in the data folder
+
 ## DEFENDER MODEL TRAINERS
 The different scripts to fit and save machine learning models are stored in defender_model_trainers directory. The trained models are stored in a directory called defender_trained_models. For example:
 ```bash
