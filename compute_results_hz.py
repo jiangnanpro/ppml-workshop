@@ -147,18 +147,18 @@ if __name__ == "__main__":
     N = 3000
 
 
-    folder_names = {"supervised_normal_fc": 97.186, 
+    folder_names = {#"supervised_normal_fc": 97.186, 
                     "supervised_normal_whole": 99.733, 
-                    "supervised_long_fc": 97.616, 
-                    "supervised_long_whole": 99.727, 
-                    "supervised_flipped_fc": 78.223, 
+                    #"supervised_long_fc": 97.616, 
+                    #"supervised_long_whole": 99.727, 
+                    #"supervised_flipped_fc": 78.223, 
                     "supervised_flipped_whole": 77.828, 
-                    "small_fake_mnist__attack_mode_forward_target_domain": 98.514,
-                    "large_fake_mnist__attack_mode_forward_target_domain": 98.675,
-                    "small_fake_mnist__attack_mode_transfer_loss": 98.514, 
-                    "large_fake_mnist__attack_mode_transfer_loss": 98.675,
-                    "small_fake_mnist__attack_mode_total_loss": 98.514,
-                    "large_fake_mnist__attack_mode_total_loss": 98.675}
+                    #"small_fake_mnist__attack_mode_forward_target_domain": 98.50556532793307,
+                    "large_fake_mnist__attack_mode_forward_target_domain": 98.65239735308174,
+                    #"small_fake_mnist__attack_mode_transfer_loss": 98.50556532793307, 
+                    "large_fake_mnist__attack_mode_transfer_loss": 98.65239735308174,
+                    #"small_fake_mnist__attack_mode_total_loss": 98.50556532793307,
+                    "large_fake_mnist__attack_mode_total_loss": 98.65239735308174}
     df = []
     for folder_name, reserve_set_classification_accuracy in folder_names.items():
 
@@ -179,12 +179,17 @@ if __name__ == "__main__":
 
         #compute_AUC_score(yhat_all, oneStep_yhat_all, df, N, M)
 
+        reserve_set_classification_accuracy /= 100
+
         privacy, privacy_standard_error = Privacy(yhat_all, oneStep_yhat_all, N=N, Nb=N, M=M)
         df.append((os.path.basename(folder_name), reserve_set_classification_accuracy, 
-            get_se(reserve_set_classification_accuracy, ), privacy, privacy_standard_error))
+            get_se(reserve_set_classification_accuracy, 202953), privacy, privacy_standard_error))
         
     df = pd.DataFrame(df, columns=["folder_name", "utility", "utility_standard_error", 
         "privacy", "privacy_standard_error"])
+    for col in ["utility", "utility_standard_error", "privacy", "privacy_standard_error"]:
+        df[col] = df[col].apply("{:.2f}".format)
+
     df.to_csv("hz_table.csv", sep="\t", encoding="utf-8")
     print(df)
 
