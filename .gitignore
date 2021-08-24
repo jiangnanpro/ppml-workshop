@@ -14,6 +14,7 @@ large_fake_mnist__attack_mode_forward_target_domain/
 data/QMNIST_ppml_ImageFolder.zip
 data/QMNIST_ppml_flipped_ImageFolder.zip
 data/QMNIST_ppml_flipped_ImageFolder/
+data/CIFAR10_tabular_ppml.pickle
 data/defender_flip20_idx.pickle
 data/reserve_flip20_idx.pickle
 data/y_defender_flipped20.pickle
