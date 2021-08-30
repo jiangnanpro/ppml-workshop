@@ -17,7 +17,7 @@ from sklearn.metrics import log_loss
 from sklearn.metrics import accuracy_score
 from sklearn.metrics.pairwise import euclidean_distances
 
-pickle_file = './data/QMNIST_tabular_ppml.pickle'
+pickle_file = './data/CIFAR10_tabular_ppml.pickle'
 
 with open(pickle_file, 'rb') as f:
   pickle_data = pickle.load(f)
@@ -50,11 +50,11 @@ from sklearn.neural_network import MLPClassifier
 def defender_model_fn(random_seed, number_model = 0):
 
     if number_model == 0:
-      model = LogisticRegression(random_state=0)
+      model = LogisticRegression(random_state=random_seed)
     elif number_model == 1:
-      model = RidgeClassifier(random_state=0)
+      model = RidgeClassifier(random_state=random_seed)
     elif number_model == 2:
-      model = LinearSVC(random_state=0)
+      model = LinearSVC(random_state=random_seed)
     elif number_model == 3:
       model = DecisionTreeClassifier(random_state=random_seed)
     elif number_model == 4:
@@ -64,15 +64,15 @@ def defender_model_fn(random_seed, number_model = 0):
     elif number_model == 6:
       model = GaussianNB() # no random_state
     elif number_model == 7:
-      model = SVC(probability=True,random_state=0)
+      model = SVC(probability=True,random_state=random_seed)
     elif number_model == 8:
-      model = SGDClassifier(random_state=0)
+      model = SGDClassifier(random_state=random_seed)
     elif number_model == 9:
-      model = Perceptron(random_state=0)
+      model = Perceptron(random_state=random_seed)
     elif number_model == 10:
-      model = RandomForestClassifier(random_state=0)
+      model = RandomForestClassifier(random_state=random_seed)
     elif number_model == 11:
-      model = MLPClassifier(random_state=0)
+      model = MLPClassifier(random_state=random_seed)
     else:
       raise Exception("Invalid number of model!", number_model)
        
@@ -185,7 +185,7 @@ def compute_utility_privacy(random_seed = None, number_model = 0, given_index = 
 
     for i in range(n_trials):
         
-        random_indexes = random.sample(range(0,200000), n_records)
+        random_indexes = random.sample(range(0,30000), n_records)
         data_in = x_defender[random_indexes], y_defender[random_indexes]
         data_out = x_reserve[random_indexes], y_reserve[random_indexes]
         
@@ -286,7 +286,7 @@ for n in tqdm(range(12)):
   results.append([n,2,u_in,u_out,pr,v,s])
 
 
-with open('./results/results_table.csv','w',newline="") as csvfile:
+with open('./results/results_table_Cifar10.csv','w',newline="") as csvfile:
     writer = csv.writer(csvfile)
     writer.writerow(['Number_model','Level_randomness','Utility_in','Utility_out','Privacy','Variance','Sigma_error'])
     writer.writerows(results)
