@@ -2,20 +2,14 @@ import numpy as np
 import csv
 import random
 import pickle
-import tensorflow as tf
-from tensorflow.keras import layers
 from tqdm import tqdm
 
 import warnings
 
 warnings.filterwarnings('ignore')
 
-from sklearn.model_selection import train_test_split
-
 from sklearn import metrics
-from sklearn.metrics import log_loss
 from sklearn.metrics import accuracy_score
-from sklearn.metrics.pairwise import euclidean_distances
 
 pickle_file = './data/CIFAR10_tabular_ppml.pickle'
 
@@ -37,7 +31,6 @@ y_reserve = y_reserve[:,0]
 from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.neighbors import KDTree
 from sklearn.svm import SVC
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
@@ -286,7 +279,7 @@ for n in tqdm(range(12)):
   results.append([n,2,u_in,u_out,pr,v,s])
 
 
-with open('./results/results_table_Cifar10.csv','w',newline="") as csvfile:
+with open('./results/results_table_CIFAR10.csv','w',newline="") as csvfile:
     writer = csv.writer(csvfile)
     writer.writerow(['Number_model','Level_randomness','Utility_in','Utility_out','Privacy','Variance','Sigma_error'])
     writer.writerows(results)
