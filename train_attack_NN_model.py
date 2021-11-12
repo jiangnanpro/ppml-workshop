@@ -52,11 +52,10 @@ def parse_arguments():
     parser.add_argument("--save_attacker_model_path", type=str, 
         default="attacker_NN_model_checkpoints", 
         help="""where to save the checkpoints of the white-box attacker neural network.""")
-    parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument('--random_seed', type=int, help='random seed', default=68)
     parser.add_argument('--lr', type=float, help='learning rate of the optimizer', default=1e-3)
     parser.add_argument('--momentum', type=float, default=0.9)
-    parser.add_argument('--weight_decay', type=float, default=1e-4)
+    parser.add_argument('--weight_decay', type=float, default=1e-2)
     parser.add_argument("--epochs", type=int, default=30)
     parser.add_argument("--zip", action="store_true", default=False)
     args = parser.parse_args()
@@ -89,8 +88,8 @@ def load_input_features(args):
     with open(os.path.join(args.input_feature_path, "hidden_all.pkl"), "rb") as f:
         hidden_all = pickle.load(f) 
 
-    with open(os.path.join(args.input_feature_path, "gradients_all.pkl"), "rb") as f:
-        gradients_all = pickle.load(f) 
+    #with open(os.path.join(args.input_feature_path, "gradients_all.pkl"), "rb") as f:
+    #    gradients_all = pickle.load(f) 
 
     with open(os.path.join(args.input_feature_path, "y_all.npy"), "rb") as f:
         y_all = np.load(f)
@@ -98,19 +97,19 @@ def load_input_features(args):
     with open(os.path.join(args.input_feature_path, "yhat_all.npy"), "rb") as f:
         yhat_all = np.load(f)
 
-    input_features = group_input_features(args, L_all, hidden_all, gradients_all, y_all, yhat_all)
+    input_features = group_input_features(args, L_all, hidden_all, y_all, yhat_all)
 
     return input_features
 
 
-def group_input_features(args, L_all, hidden_all, gradients_all, y_all, yhat_all):
+def group_input_features(args, L_all, hidden_all, y_all, yhat_all):
     """
     concatenate L_all, y_all, yhat_all to one flatten vector
     to be fed into a fully-connected feature extractor
     """
     assert len(L_all) == args.N * 2
     assert len(hidden_all) == args.N * 2
-    assert len(gradients_all) == args.N * 2
+    #assert len(gradients_all) == args.N * 2
     assert len(y_all) == args.N * 2
     assert len(yhat_all) == args.N * 2
 
@@ -119,11 +118,11 @@ def group_input_features(args, L_all, hidden_all, gradients_all, y_all, yhat_all
     for i in range(args.N * 2):
         L = L_all[i]
         hidden = hidden_all[i]
-        grad = gradients_all[i]
+        #grad = gradients_all[i]
         y = y_all[i]
         yhat = yhat_all[i]
 
-        input_feature = InputFeature(L, hidden, grad, y, yhat)
+        input_feature = InputFeature(L, hidden, y, yhat)
         input_features.append(input_feature)
     return input_features
 
@@ -136,7 +135,7 @@ class InputFeature:
     y: np.ndarray of size 10, float32 (one-hot encoding)
     yhat: np.ndarray of size 10, float32 
     """
-    def __init__(self, L, hidden, grad, y, yhat):
+    def __init__(self, L, hidden, y, yhat):
         self.flatten_vector = [L]
         self.flatten_vector.extend(y.tolist())
         self.flatten_vector.extend(yhat.tolist())
@@ -146,15 +145,15 @@ class InputFeature:
         #for k in grad.keys():
         #    self.keys.append(k)
 
-        self.grad = grad
+        #self.grad = grad
         self.hidden = hidden
 
 
 class FullyConnectedFeatureExtractor(nn.Module):
     def __init__(self, dim_in, dim_out):
         super().__init__() 
-        self.fc1 = nn.Linear(dim_in, 10)
-        self.fc2 = nn.Linear(10, dim_out)
+        self.fc1 = nn.Linear(dim_in, 2)
+        self.fc2 = nn.Linear(2, dim_out)
 
     def forward(self, x):
         x = F.relu(self.fc1(x))
@@ -165,14 +164,12 @@ class FullyConnectedFeatureExtractor(nn.Module):
 class FullyConnectedEncoder(nn.Module):
     def __init__(self, dim_in, dim_out):
         super().__init__() 
-        self.fc1 = nn.Linear(dim_in, 5)
-        self.fc2 = nn.Linear(5, 5)
-        self.fc3 = nn.Linear(5, dim_out)
+        self.fc1 = nn.Linear(dim_in, 2)
+        self.fc2 = nn.Linear(2, dim_out)
 
     def forward(self, x):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        x = F.relu(self.fc3(x))
         return x
 
 
@@ -208,39 +205,45 @@ class WhiteBoxAttackerNeuralNetwork(nn.Module):
     def __init__(self, selected_conv_layer_names, hidden_layer_features_shape, param_gradients_shape, device):
         super().__init__() 
 
+        self.device = device
+
         self.selected_conv_layer_names = selected_conv_layer_names
 
         self.hidden_feature_extractors = {}
         for name in self.selected_conv_layer_names:
             channels = hidden_layer_features_shape[name][0]
-            self.hidden_feature_extractors[name] = Convolutional2DFeatureExtractor(channels, 5)
+            self.hidden_feature_extractors[name] = Convolutional2DFeatureExtractor(channels, 2)
+            self.hidden_feature_extractors[name].to(self.device)
 
-        self.grad_feature_extractors = {}
-        for name in self.selected_conv_layer_names:
-            channels = param_gradients_shape[name][0]
-            self.grad_feature_extractors[name] = Convolutional3DFeatureExtractor(channels, 5)
+        #self.grad_feature_extractors = {}
+        #for name in self.selected_conv_layer_names:
+        #    channels = param_gradients_shape[name][0]
+        #    self.grad_feature_extractors[name] = Convolutional3DFeatureExtractor(channels, 5)
 
 
-        self.fc_feature_extractor = FullyConnectedFeatureExtractor(21, 5)
+        self.fc_feature_extractor = FullyConnectedFeatureExtractor(21, 2)
 
         # find it out empirically
-        encoder_input_size = 10 # TODO
+        encoder_input_size = 7574 
 
-        self.encoder = FullyConnectedEncoder(encoder_input_size, 1)
+        self.encoder = FullyConnectedEncoder(encoder_input_size, 2)
 
-        self.device = device
+        
 
 
     def forward(self, input_feature):
-        x_list = [self.fc_feature_extractor(input_feature.flatten_vector.to(self.device))]
+        tmp = torch.from_numpy(input_feature.flatten_vector).unsqueeze(0).to(self.device)
+        x_list = [self.fc_feature_extractor(tmp).view(-1)]
 
         hidden_embedding = []
-        grad_embedding = []
+        #grad_embedding = []
         for name in self.selected_conv_layer_names:
-            x_list.append(self.hidden_feature_extractors[name](input_feature.hidden.to(self.device)))
-            x_list.append(self.grad_feature_extractors[name](input_feature.grad.to(self.device)))
+            tmp = torch.from_numpy(input_feature.hidden[name]).unsqueeze(0).to(self.device)
+            x_list.append(self.hidden_feature_extractors[name](tmp).view(-1))
+            #x_list.append(self.grad_feature_extractors[name](input_feature.grad.to(self.device)))
 
         x = torch.cat(x_list, dim=0).view(-1)
+        #print(x.shape)
         x = self.encoder(x)
         return x
 
@@ -284,9 +287,11 @@ def train(train_dataloader, model, device, optim, epoch, args):
     
     model.train()
     for batch_idx, (X, y) in enumerate(train_dataloader):
+        y = torch.from_numpy(np.array([y])).to(device)
+
         optim.zero_grad()
 
-        logits = model(X)
+        logits = model(X).unsqueeze(0)
         loss = criterion(logits, y)
 
         loss.backward()
@@ -294,7 +299,7 @@ def train(train_dataloader, model, device, optim, epoch, args):
 
         train_loss += loss.item()
         correct_cnt += (logits.argmax(dim=1) == y).sum().item() 
-        total_cnt += y.shape[0]
+        total_cnt += 1
 
     train_loss /= len(train_dataloader)
     train_acc = (correct_cnt / total_cnt) * 100
@@ -317,8 +322,9 @@ def test(test_dataloader, model, device, epoch, args, test_logits):
     model.eval()
     with torch.no_grad():
         for batch_idx, (X, y) in enumerate(test_dataloader):
+            y = torch.from_numpy(np.array([y])).to(device)
             
-            logits = model(X)
+            logits = model(X).unsqueeze(0)
 
             test_logits.extend(logits.detach().cpu().numpy())
             
@@ -326,7 +332,7 @@ def test(test_dataloader, model, device, epoch, args, test_logits):
 
             test_loss += loss.item()
             correct_cnt += (logits.argmax(dim=1) == y).sum().item() 
-            total_cnt += y.shape[0]
+            total_cnt += 1
 
     
     test_loss /= len(test_dataloader)
@@ -356,30 +362,59 @@ class FeatureDataset(torch.utils.data.Dataset):
         return self.features[idx], self.labels[idx]
 
 
+class FeatureDataloader:
+    def __init__(self, dataset, shuffle=False):
+        self.dataset = dataset
+        self.shuffle = shuffle
+
+        self.current_iteration_indices = list(range(len(self.dataset)))
+        if self.shuffle:
+            np.random.shuffle(self.current_iteration_indices)
+        self.current_idx = 0
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __iter__(self):
+        # TODO
+        #returning __iter__ object
+        return self
+
+    def __next__(self):
+        if self.current_idx >= len(self.dataset):
+            self.current_idx = 0
+            if self.shuffle:
+                np.random.shuffle(self.current_iteration_indices)
+            raise StopIteration
+        X, y = self.dataset[self.current_iteration_indices[self.current_idx]]
+        self.current_idx += 1
+        return X, y
+
+
 
 def get_data_loaders(args, input_features):
     # First N == defender, last N == reserve
     assert len(input_features) == args.N * 2
 
 
-    defender_train = input_features[: int(args.N // 2)]
+    defender_train = input_features[: int(args.N // 2)] # 1500
     defender_test = input_features[int(args.N // 2) : args.N]
-    reserve_train = input_features[args.N : (args.N + int(args.N // 2))]
+    reserve_train = input_features[args.N : (args.N + int(args.N // 2))] # 1500
     reserve_test = input_features[(args.N + int(args.N // 2)) :]
 
-    train_features = defender_train.extend(reserve_train)
+    train_features = defender_train + reserve_train
     train_labels = np.ones(args.N, dtype=np.int64)
     train_labels[- int(args.N // 2) :] = 0
 
-    test_features = defender_test.extend(reserve_test)
+    test_features = defender_test + reserve_test
     test_labels = np.ones(args.N, dtype=np.int64)
     test_labels[- int(args.N // 2) :] = 0
 
     train_dataset = FeatureDataset(train_features, train_labels)
     test_dataset = FeatureDataset(test_features, test_labels)
 
-    train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
-    test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False)
+    train_dataloader = FeatureDataloader(train_dataset, shuffle=True)
+    test_dataloader = FeatureDataloader(test_dataset, shuffle=False)
     return train_dataloader, test_dataloader
 
 
@@ -406,8 +441,8 @@ if __name__ == "__main__":
 
 
     # wandb
-    project_name = "white_box_membership_attacker_with_NN"
-    group_name = "placeholder".format()
+    project_name = "white_box_membership_attacker_with_NN_v2"
+    group_name = "{}".format(args.lr)
     wandb_dir = "wandb_logs"
     if not os.path.exists(wandb_dir):
         os.makedirs(wandb_dir)
