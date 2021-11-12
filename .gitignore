@@ -21,3 +21,8 @@ data/y_defender_flipped20.pickle
 data/y_reserve_flipped20.pickle
 hz_intermediate_results/
 hz_table.csv
+supervised_model_checkpoints/best_model_supervised_resnet50_QMNIST_defender_whole-0.0001-normal-normal_gallant-wildflower-1.pth
+data/QMNIST_ppml.pickle
+attack_with_NN_results/
+attack_with_NN_resnet50_feature_shapes/
+wandb_logs/

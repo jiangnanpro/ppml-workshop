@@ -29,3 +29,32 @@ The different scripts to fit and save machine learning models are stored in defe
 ```bash
 python defender_model_trainers/simple_fn_keras.py
 ```
+
+## WHITE-BOX ATTACKER 
+
+* All the defender models and input data needed to run the experiments are available at [https://upsud-my.sharepoint.com/:u:/g/personal/haozhe_sun_u-psud_fr/ERZ_x4Yj_IpAtR2ctr_7o_0BguzXXgZv2fkJwh4iGUW7BQ?e=Cb09dJ](https://upsud-my.sharepoint.com/:u:/g/personal/haozhe_sun_u-psud_fr/ERZ_x4Yj_IpAtR2ctr_7o_0BguzXXgZv2fkJwh4iGUW7BQ?e=Cb09dJ)
+* `QMNIST_ppml.pickle` is also available by running `data/split_qmnist.py`
+* `best_model_supervised_resnet50_QMNIST_defender_whole-0.0001-normal-normal_gallant-wildflower-1.pth` is also available at [https://upsud-my.sharepoint.com/:u:/g/personal/haozhe_sun_u-psud_fr/EQzSwHgzCQxIuKPkthZZX3YB2-RaYGpjAbiZW_ZBpqMCRA?e=Wzy9H7](https://upsud-my.sharepoint.com/:u:/g/personal/haozhe_sun_u-psud_fr/EQzSwHgzCQxIuKPkthZZX3YB2-RaYGpjAbiZW_ZBpqMCRA?e=Wzy9H7)
+* Defender models were trained using scripts `train_supervised.sh` and `supervised_train_resnet50_defender.py`. 
+* Once the defender models and input data are ready, `oracle_attack_UDA.sh` and `oracle_attack_UDA.py` allows generating the input features for the white-box attackers without using a neural network.
+* `oracle_attack_using_NN.sh` and `oracle_attack_using_NN.py` allows generating the input features for the white-box attackers using a neural network.
+* Once the previous step is done, the script `compute_results_hz.py` allows generating the final table for the white-box attack experiments, where the utility scores are computed by the script `get_reserve_accuracy_.py`
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
