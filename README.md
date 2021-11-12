@@ -39,10 +39,7 @@ python defender_model_trainers/simple_fn_keras.py
 * Once the defender models and input data are ready, `oracle_attack_UDA.sh` and `oracle_attack_UDA.py` allows generating the input features for the white-box attackers without using a neural network.
 * `oracle_attack_using_NN.sh` and `oracle_attack_using_NN.py` allows generating the input features for the white-box attackers using a neural network.
 * Once the previous step is done, the script `compute_results_hz.py` allows generating the final table for the white-box attack experiments, where the utility scores are computed by the script `get_reserve_accuracy_.py`
-
-
-
-
+* The experiments of the white-box membership attacker using a neural network are available at `oracle_attack_using_NN.py`, `oracle_attack_using_NN.sh`, `train_attack_NN_model.py` and `train_attack_NN_model.sh`. `oracle_attack_using_NN.py` should be run before `train_attack_NN_model.py`
 
 
 
